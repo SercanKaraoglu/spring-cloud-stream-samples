@@ -28,7 +28,7 @@ public class Producer1Application {
 		SpringApplication.run(Producer1Application.class, args);
 	}
 
-	@RequestMapping(value = "/messages", method = RequestMethod.POST)
+	@RequestMapping(value = "/messages", method = RequestMethod.GET)
 	public String sendMessage() {
 		source.output().send(MessageBuilder.withPayload(randomSensor()).build());
 		return "ok, have fun with v1 payload!";

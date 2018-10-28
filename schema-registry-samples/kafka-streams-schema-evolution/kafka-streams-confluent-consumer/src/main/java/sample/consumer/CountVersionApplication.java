@@ -32,53 +32,55 @@ import java.util.Map;
 @EnableScheduling
 public class CountVersionApplication {
 
-	private static final String STORE_NAME = "sensor-store";
+    private static final String STORE_NAME = "sensor-store";
 
-	private final Log logger = LogFactory.getLog(getClass());
+    private final Log logger = LogFactory.getLog(getClass());
 
-	ReadOnlyKeyValueStore<Object, Object> keyValueStore;
+    ReadOnlyKeyValueStore<Object, Object> keyValueStore;
 
-	@Autowired
-	private InteractiveQueryService queryService;
+    @Autowired
+    private InteractiveQueryService queryService;
 
-	public static void main(String[] args) {
-		SpringApplication.run(CountVersionApplication.class, args);
-	}
+    public static void main(String[] args) {
+        SpringApplication.run(CountVersionApplication.class, args);
+    }
 
-	@StreamListener("input")
-	@SendTo("output")
-	public KStream<String, Long> process(KStream<Object, Sensor> input) {
+    @StreamListener("input")
+    @SendTo("output")
+    public KStream<String, Long> process(KStream<Object, Sensor> input) {
 
-		final Map<String, String> serdeConfig = Collections.singletonMap(
-				AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, "http://localhost:8081");
+        final Map<String, String> serdeConfig = Collections.singletonMap(
+                AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, "http://localhost:8081");
 
-		final SpecificAvroSerde<Sensor> sensorSerde = new SpecificAvroSerde<>();
-		sensorSerde.configure(serdeConfig, false);
+        final SpecificAvroSerde<Sensor> sensorSerde = new SpecificAvroSerde<>();
+        sensorSerde.configure(serdeConfig, false);
 
-		return input
-				.map((k, value) -> {
-					String newKey = "v1";
-					if (value.getId().toString().endsWith("v2")) {
-						newKey = "v2";
-					}
-					return new KeyValue<>(newKey, value);
-				})
-				.groupByKey()
-				.count(Materialized.<String, Long, KeyValueStore<Bytes, byte[]>>as(STORE_NAME)
-						.withKeySerde(Serdes.String())
-						.withValueSerde(Serdes.Long()))
-				.toStream();
+        return input
+                .map((k, value) -> {
+                    String newKey = "v1";
+                    if (value.getId().toString().endsWith("v2")) {
+                        newKey = "v2";
+                    }
+                    return new KeyValue<>(newKey, value);
+                })
+                .groupByKey()
+                .count(
+                        Materialized.<String, Long, KeyValueStore<Bytes, byte[]>>as(STORE_NAME)
+                                .withKeySerde(Serdes.String())
+                                .withValueSerde(Serdes.Long())
+                )
+                .toStream();
 
-	}
+    }
 
-	@Scheduled(fixedRate = 30000, initialDelay = 5000)
-	public void printVersionCounts() {
-		if (keyValueStore == null) {
-			keyValueStore = queryService.getQueryableStore(STORE_NAME, QueryableStoreTypes.keyValueStore());
-		}
+    @Scheduled(fixedRate = 1000, initialDelay = 5000)
+    public void printVersionCounts() {
+        if (keyValueStore == null) {
+            keyValueStore = queryService.getQueryableStore(STORE_NAME, QueryableStoreTypes.keyValueStore());
+        }
 
-		logger.info("Count for v1 is=" + keyValueStore.get("v1"));
-		logger.info("Count for v2 is=" + keyValueStore.get("v2"));
-	}
+        logger.info("Count for v1 is=" + keyValueStore.get("v1"));
+        logger.info("Count for v2 is=" + keyValueStore.get("v2"));
+    }
 
 }

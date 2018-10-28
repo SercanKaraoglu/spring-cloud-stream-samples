@@ -1,6 +1,6 @@
 package sample.producer2;
 
-import com.example.Sensor;
+import com.example.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Random;
-import java.util.UUID;
 
 @SpringBootApplication
 @EnableSchemaRegistryClient
@@ -31,19 +30,55 @@ public class Producer1Application {
 		SpringApplication.run(Producer1Application.class, args);
 	}
 
-	@RequestMapping(value = "/messages", method = RequestMethod.POST)
-	public String sendMessage() {
-		source.output().send(MessageBuilder.withPayload(randomSensor()).build());
+	@RequestMapping(value = "/email", method = RequestMethod.GET)
+	public String sendEmail() {
+		source.output().send(MessageBuilder.withPayload(email()).build());
+		return "ok, have fun with v1 payload!";
+	}
+	@RequestMapping(value = "/sms", method = RequestMethod.GET)
+	public String sendSms() {
+		source.output().send(MessageBuilder.withPayload(sms()).build());
+		return "ok, have fun with v1 payload!";
+	}
+	@RequestMapping(value = "/notification", method = RequestMethod.GET)
+	public String sendNotification() {
+		source.output().send(MessageBuilder.withPayload(notification()).build());
 		return "ok, have fun with v1 payload!";
 	}
 
-	private Sensor randomSensor() {
-		Sensor sensor = new Sensor();
-		sensor.setId(UUID.randomUUID().toString() + "-v1");
-		sensor.setAcceleration(random.nextFloat() * 10);
-		sensor.setVelocity(random.nextFloat() * 100);
-		sensor.setTemperature(random.nextFloat() * 50);
-		return sensor;
+	private MessageToSend notification() {
+		MessageToSend messageToSend = getMessageToSend();
+		PushNotification pushNotification = new PushNotification();
+		pushNotification.setArn("google");
+		pushNotification.setText("hello");
+		messageToSend.setPayload(pushNotification);
+		return messageToSend;
+	}
+
+	private MessageToSend sms() {
+		MessageToSend messageToSend = getMessageToSend();
+		Sms sms = new Sms();
+		sms.setPhoneNumber("6141231212");
+		sms.setText("hello");
+		messageToSend.setPayload(sms);
+		return messageToSend;
+	}
+
+	private MessageToSend email() {
+		MessageToSend messageToSend = getMessageToSend();
+		Email email = new Email();
+		email.setAddressTo("sercan");
+		email.setText("hello");
+		email.setTitle("hi");
+		messageToSend.setPayload(email);
+		return messageToSend;
+	}
+
+	private MessageToSend getMessageToSend() {
+		MessageToSend messageToSend = new MessageToSend();
+		messageToSend.setCorrelationId("abc");
+		messageToSend.setType("sms");
+		return messageToSend;
 	}
 
 	//Another convenience POST method for testing deterministic values

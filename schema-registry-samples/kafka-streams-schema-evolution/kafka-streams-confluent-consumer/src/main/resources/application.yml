@@ -14,6 +14,7 @@ spring.cloud.stream.kafka.streams.binder:
       default.value.serde: io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde
 spring.cloud.stream.kafka.streams.bindings.input:
   consumer:
+    applicationId: "counter"
   # The following 2 props are not needed as they are same as the global ones.
   # Adding it here in order to illustrate the usage of it if they are indeed different from the global Serde's
     keySerde: org.apache.kafka.common.serialization.Serdes$StringSerde

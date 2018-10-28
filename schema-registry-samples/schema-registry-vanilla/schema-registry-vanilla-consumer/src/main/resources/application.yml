@@ -8,5 +8,5 @@ spring:
         endpoint: http://localhost:8990
       schema:
         avro:
-          schema-locations: classpath:avro/sensor.avsc
+          schema-locations: classpath:avro/messages.avsc
 server.port: 9999
